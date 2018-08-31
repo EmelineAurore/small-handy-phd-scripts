@@ -1,0 +1,2 @@
+# get the sequence names from a fasta file
+grep -o -E "^>\w+" my.fasta | tr -d ">"  
