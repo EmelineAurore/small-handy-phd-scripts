@@ -1,2 +1,4 @@
 # get the sequence names from a fasta file
 grep -o -E "^>\w+" my.fasta | tr -d ">"  
+# get the length of each sequence from a fasta file
+cat my.fasta | awk '/^>/ {if (seqlen){print seqlen}; print ;seqlen=0;next; } { seqlen += length($0)}END{print seqlen}' > scaf-names-length.txt
