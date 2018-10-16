@@ -4,3 +4,6 @@ grep -o -E "^>\w+" my.fasta | tr -d ">"
 cat my.fasta | awk '/^>/ {if (seqlen){print seqlen}; print ;seqlen=0;next; } { seqlen += length($0)}END{print seqlen}' > scaf-names-length.txt
 # from fasta to fastq
 seqtk seq -a in.fastq.gz > out.fasta
+# get the total number of nucleotides in a fastq
+zcat file.fq.gz | paste - - - - | cut -f2 | wc -c
+cat file.fq | paste - - - - | cut -f2 | wc -c
