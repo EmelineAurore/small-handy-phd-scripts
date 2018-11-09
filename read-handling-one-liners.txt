@@ -9,4 +9,6 @@ zcat file.fq.gz | paste - - - - | cut -f2 | wc -c
 cat file.fq | paste - - - - | cut -f2 | wc -c
 # get the average nucleotide length
 awk '{if(NR%4==2) {count++; bases += length} } END{print bases/count}' < file.fastq
+# unlink all
+for f in *fastq; do unlink “$f”; done
 
