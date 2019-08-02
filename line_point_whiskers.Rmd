@@ -1,0 +1,104 @@
+---
+title: "ggplot to combine error bars, points and line"
+author: "EmelineFavreau"
+date: "2 August 2019"
+output:
+  pdf_document: default
+---
+
+
+
+```{r load libraries, eval = TRUE, echo = FALSE, include = FALSE}
+# aim: combine whiskers, points and line in a ggplot with structured data
+
+# load library
+library("ggplot2")
+
+```
+
+Our toy dataset has two development stages (a, b), 3 subunits (A, B, C). For each combination of stage and gene subunit, there are 3 reads counts.
+
+```{r make up data, eval = TRUE, echo = FALSE, include = TRUE}
+# create a vector for each subunit
+subunit_vec <- LETTERS[1:3]
+
+# create a vector for each stage
+stage_vec <- letters[1:2]
+
+# here I make up some data, change the following code for your dataset
+my_df <- as.data.frame(cbind(c(rep(stage_vec[1], times = 9), rep(stage_vec[2], times = 9)),
+                             c(rep( rep(subunit_vec, each = 3), times = 2)),
+                             c(1:9, 20:28)), stringsAsFactors = FALSE)
+            
+colnames(my_df) <- c("stage", "subunit", "counts")
+
+my_df$counts <- as.numeric(my_df$counts)               
+
+my_df
+```
+
+We first combine the results to obtain for each subunit and each stage, the read count mean, lower value and upper value.
+```{r create a result dataframe to combine mean lower and upper datapoints, eval = TRUE, echo = FALSE, include = TRUE}
+# create a result dataframe (empty now, will be filled by the loop)
+result_df <- as.data.frame(matrix(NA, ncol = 5))
+
+# name dataframe columns
+colnames(result_df) <- c("subunit", "stage", "count_mean", "lower_count", "upper_count")
+
+# loop through your criteria
+for(stage_position in 1:length(stage_vec)){
+  for(subunit_position in 1:length(subunit_vec)){
+    # subset for the stage and the subunit
+    my_df_subset <- subset(my_df, subset = stage == stage_vec[stage_position] & subunit == subunit_vec[subunit_position])
+    # obtain count mean
+    count_mean <- mean(my_df_subset$counts)
+    # obtain the lower count
+    lower_count <- min(my_df_subset$counts)
+    # obtain the higher count
+    higher_count <- max(my_df_subset$counts)
+    # combine all into a vector
+    result_vec <- c(subunit_vec[subunit_position],
+                    stage_vec[stage_position],
+                    count_mean,
+                    lower_count,
+                    higher_count)
+    # add to the result df
+    result_df <- rbind(result_df, result_vec)
+    
+  
+  }
+}
+# remove MA
+result_df <- result_df[complete.cases(result_df), ]
+
+# change character for numeric
+result_df$count_mean <- as.numeric(result_df$count_mean)
+result_df$lower_count <- as.numeric(result_df$lower_count)
+result_df$upper_count <- as.numeric(result_df$upper_count)
+
+# check result df (uncomment to check)
+head(result_df)
+```
+
+In one graph, we present the results.
+
+```{r plot the result, eval = TRUE, echo = FALSE, include = TRUE}
+# plot your results
+ggplot(result_df, aes(x = stage, y = count_mean, group = subunit, colour = subunit)) + 
+  geom_errorbar(data = result_df,
+                mapping = aes(x = stage, ymin = upper_count, ymax = lower_count),
+                width = 0.2,
+                size = 1) + 
+  geom_point(data = result_df,
+             mapping = aes(x = stage, y = count_mean),
+             size = 4,
+             shape = 21,
+             fill = "white") +
+  geom_line(data = result_df,
+            mapping = aes(x = stage, y = count_mean)) +
+  theme_classic()
+
+
+```
+
+We conclude that in the development stage b, all subunits have more read counts.
